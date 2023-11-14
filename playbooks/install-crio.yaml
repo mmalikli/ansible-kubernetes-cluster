@@ -1,0 +1,100 @@
+- name: Install and configure CRI-O
+  become: true
+  hosts: all
+  tasks:
+  
+  - name: Load CRI-O kernel modules
+    ansible.builtin.template:
+      src: ../templates/kernel_modules.j2
+      dest: /etc/modules-load.d/crio.conf
+
+  - name: Load kernel modules
+    ansible.builtin.command: modprobe {{ item }}
+    loop: "{{ kernel_modules }}"
+
+  - name: Set up required sysctl params for CRI-O
+    ansible.builtin.template:
+      src: ../templates/sysctl_parameters.j2
+      dest: /etc/sysctl.d/99-kubernetes-cri.conf
+
+  - name: Apply sysctl params
+    ansible.builtin.command: sysctl --system
+
+  - name: A
+    shell: echo "deb [signed-by=/usr/share/keyrings/libcontainers-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable//{{ os }}/ /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list
+  - name: B
+    shell: echo "deb [signed-by=/usr/share/keyrings/libcontainers-crio-archive-keyring.gpg] https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/{{ os }} /" > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable:cri-o:{{ version }}.list
+  - name: C
+    shell: curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/Release.key | gpg --dearmor -o /usr/share/keyrings/libcontainers-archive-keyring.gpg
+  - name: D
+    shell: curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/{{ os }}/Release.key | gpg --dearmor -o /usr/share/keyrings/libcontainers-crio-archive-keyring.gpg
+
+  # - name: Add CRI-O apt repository key
+  #   become: true
+  #   ansible.builtin.apt_key:
+  #     url: "https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:{{ version }}/{{ os }}/Release.key"
+  #     keyring: "/etc/apt/trusted.gpg.d/libcontainers.gpg"
+  #     state: present
+
+  # - name: Add CRI-O apt repository
+  #   become: true
+  #   ansible.builtin.apt_repository:
+  #     filename: "devel:kubic:libcontainers:stable.list"
+  #     repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/{{ os }}/ /"
+  #     state: present
+
+  # - name: Add CRI-O apt repository for cri-o-runc
+  #   become: true
+  #   ansible.builtin.apt_repository:
+  #     filename: "devel:kubic:libcontainers:stable:cri-o:{{ version }}.list"
+  #     repo: "deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable:/cri-o:/{{ version }}/{{ os }}/ /"
+  #     state: present
+  - name: Install cri-o-runc dependencie
+    become: true
+    apt:
+      name: libseccomp-dev
+      state: present
+      update_cache: true
+
+  - name: Install CRI-O packages
+    become: true
+    ansible.builtin.apt:
+      name:
+        - cri-o
+        - cri-o-runc
+      #  - cri-tools
+      state: present
+      update_cache: true
+
+  # - name: Enable and start CRI-O service
+  #   become: true
+  #   ansible.builtin.systemd:
+  #     name: crio
+  #     state: started
+  #     enabled: true
+  #     daemon_reload: true
+  
+  - name: Configure containerd
+    ansible.builtin.copy:
+      src: ../crio.conf
+      dest: /etc/crio/crio.conf
+      force: yes
+
+  - name: Configure containerd
+    ansible.builtin.copy:
+      src: ../100-crio-bridge.conf
+      dest: /etc/cni/net.d/
+      force: yes
+
+  - name: Enable and start CRI-O service
+    become: true
+    ansible.builtin.systemd:
+      daemon_reload: true
+      state: restarted
+      enabled: true 
+      name: crio
+  
+  - name: Wait for 30 seconds
+    pause:
+      seconds: 30
+  

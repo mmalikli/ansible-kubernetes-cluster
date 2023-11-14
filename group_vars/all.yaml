@@ -1,0 +1,29 @@
+#Version of the machines
+os: xUbuntu_22.04
+
+#Version of CRI-O
+version: 1.24
+
+#Ansible user on remote machines
+ansible_user: prdadm
+
+#Kernel Modules
+kernel_modules:
+- overlay
+- br_netfilter
+
+#System control parameters
+sysctl_params:
+- { name: net.bridge.bridge-nf-call-iptables, value: 1 }
+- { name: net.ipv4.ip_forward, value: 1 }
+- { name: net.bridge.bridge-nf-call-ip6tables, value: 1 } 
+
+# Repository 
+# CRI-O
+kube_archive_gpg_key_link_url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+gpg_key_target_dir: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+# Kubernetes version
+kubelet_version: 1.27.3-00
+kubeadm_version: 1.27.3-00
+kubectl_version: 1.27.3-00

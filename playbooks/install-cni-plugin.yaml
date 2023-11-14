@@ -1,0 +1,21 @@
+---
+- name: Applay the Calico CNI plugin
+  hosts: master_nodes
+
+  tasks:
+  # - name: Create a manifests folder on a master node
+  #   file:
+  #     path: "{{ ansible_user_dir}}/manifests"
+  #     state: directory
+  - name: Copy the manifests folder on host machine to the Master node
+    copy: 
+      src: ../manifests
+      dest: "{{ ansible_user_dir}}/"
+  
+  - name: Apply the manifest
+    become_user: node
+    command: 'kubectl create -f "{{ ansible_user_dir}}"/manifests/calico.yaml'
+
+  - name: Wait for 1 min
+    pause:
+      seconds: 60

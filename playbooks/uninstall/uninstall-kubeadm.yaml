@@ -1,0 +1,42 @@
+- name: Uninstall kubectl, kubeadm, kubelet
+  hosts: all
+  become: true
+  tasks:
+  - name: Remove Kubernetes apt repository
+    ansible.builtin.apt_repository:
+      repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main"
+      state: absent
+      filename: kubernetes.list
+
+  - name: Remove Kubernetes apt key
+    ansible.builtin.file:
+      path: /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+      state: absent
+      
+  - name: Unpin the version of kubeadm
+    ansible.builtin.dpkg_selections:
+      name: kubeadm
+      selection: purge
+      
+  - name: Unpin the version of kubectl
+    ansible.builtin.dpkg_selections:
+      name: kubectl
+      selection: purge
+
+  - name: Unpin the version of kubectl
+    ansible.builtin.dpkg_selections:
+      name: kubectl
+      selection: purge
+
+  - name: Uninstall kubelet, kubeadm, and kubectl
+    ansible.builtin.apt:
+      name:
+      - kubelet
+      - kubeadm
+      - kubectl
+      state: absent
+
+  - name: Remove kubelet config file
+    ansible.builtin.file:
+      path: /etc/default/kubelet
+      state: absent

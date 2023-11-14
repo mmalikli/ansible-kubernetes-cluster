@@ -1,0 +1,5 @@
+#Arguments needed for the initialization of the kubernetes cluster
+ipaddr: "{{ansible_default_ipv4.address}}"
+node_name: "{{ ansible_hostname }}"
+pod_cidr: "192.168.0.0/16"
+

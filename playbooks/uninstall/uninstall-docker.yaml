@@ -1,0 +1,77 @@
+---
+- name: Remove Docker-related packages
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Uninstall Docker-related packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - docker.io
+        - docker-doc
+        - docker-compose
+        - podman-docker
+        - containerd
+        - runc
+    
+    - name: Uninstall Docker packages
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: true
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+        - docker-ce-rootless-extras
+
+# TODO: Write in loop 
+    - name: Remove Docker GPG key
+      file:
+        path: /etc/apt/keyrings/docker.gpg
+        state: absent
+        
+    - name: Remove Docker repository file
+      file:
+        path: "/etc/apt/sources.list.d/docker.list"
+        state: absent
+
+    - name: Remove Docker PID file
+      file:
+        path: "/var/run/docker.pid"
+        state: absent
+
+    - name: Remove Docker Socket file
+      file:
+        path: "/var/run/docker.sock"
+        state: absent  
+    
+    - name: Remove Docker /var/run/docker directory
+      file:
+        path: "/var/run/docker"
+        state: absent
+
+    - name: Remove Docker /var/run/docker directory
+      file:
+        path: "/var/run/containerd"
+        state: absent
+
+    - name: Remove Docker /etc/docker directory
+      file:
+        path: "/etc/docker"
+        state: absent
+
+    - name: Remove Docker /var/lib/docker directory
+      file:
+        path: "/var/lib/docker"
+        state: absent 
+    
+    - name: Remove Docker /var/lib/docker directory
+      file:
+        path: "/var/lib/containerd"
+        state: absent 
+    

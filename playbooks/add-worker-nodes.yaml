@@ -1,0 +1,32 @@
+- name: Generate new token
+  hosts: master_nodes
+  tasks:
+
+  - name: Generate new token and the worker node
+    ansible.builtin.command: "kubeadm token create --print-join-command"
+    register: token
+
+  - name: Token print
+    ansible.builtin.debug:
+      msg: "{{ token }}"
+
+  - name: Write the token to the tmp directory
+    delegate_to: localhost
+    ansible.builtin.copy:
+      content: "{{ token.stdout }}"
+      dest: /tmp/token
+
+#---------------------------------------------------------------------
+- name: Add worker nodes with token
+  hosts: worker_nodes 
+
+  tasks:
+
+  - name: Register this token
+    delegate_to: localhost
+    ansible.builtin.command: "cat /tmp/token"
+    register: token
+  
+  - name: Add the workers to the master node
+    become: true
+    ansible.builtin.command: "{{ token.stdout}}"
